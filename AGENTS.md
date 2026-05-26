@@ -11,7 +11,7 @@
 1. **Современное ядро D7 везде, где это возможно.** Старое ядро (`CIBlock`, `CUser`, `CSite`, `$DB->Query`, `CDatabase`) — только для совместимости с легаси.
 2. **MVC + сервисный слой.** Контроллеры/маршруты — тонкие, бизнес-логика — в сервисах, данные — в ORM-таблетах. Компоненты — только отображение.
 3. **Dependency Injection > статические вызовы.** Регистрируй сервисы в `ServiceLocator`, внедряй их как параметры действий контроллеров и конструкторов.
-4. **Типизация и ясность.** PHP 8.1+, `declare(strict_types=1)`, readonly-свойства, перечисления, DTO и Result-объекты вместо «магических» массивов.
+4. **Типизация и ясность.** PHP 8.2+, `declare(strict_types=1)`, readonly-свойства, перечисления, DTO и Result-объекты вместо «магических» массивов.
 5. **Безопасность по умолчанию.** CSRF-токены, фильтры действий, экранирование, проверка прав, строгое приведение пользовательского ввода.
 6. **Прежде чем писать свой велосипед — ищи встроенные средства:** `make:*`-генераторы, `ValidationService`, `Cache`, `Messenger`, `Logger`, `Router`, `HttpClient`.
 
@@ -185,7 +185,7 @@ final class NotificationService
 
 ## Когда какой скилл использовать
 
-Скиллы лежат в `.agents/skills/<skill-name>/SKILL.md`. Открывай их при задачах соответствующей тематики.
+Скиллы лежат в `skills/<skill-name>/SKILL.md` (после клонирования в Bitrix-проект — `.cursor/skills/<skill-name>/SKILL.md`). Открывай их при задачах соответствующей тематики.
 
 | Область | Скилл |
 | --- | --- |
@@ -211,6 +211,7 @@ final class NotificationService
 | `Application`, `Context`, `HttpRequest`, `HttpResponse`, `Json`/`Redirect` | `bitrix-request-response` |
 | Сессии: `getSession`, `getKernelSession`, `getLocalSession`, режимы | `bitrix-sessions` |
 | Прямой SQL: `Connection`, `SqlHelper`, `SqlExpression`, транзакции, DDL | `bitrix-database` |
+| Тестовое задание: модуль «Избранное (Wishlist)» | `bitrix-ai-challenge` |
 
 ---
 

@@ -2,6 +2,8 @@
 
 Единый набор инструкций и навыков для AI-агентов (Cursor) при разработке на **1С-Битрикс**. Репозиторий не является частью конкретного сайта — это переиспользуемая база знаний, которую подключают к любому Bitrix-проекту.
 
+**Репозиторий:** https://github.com/xesamanna2000/cursor
+
 ## Зачем это нужно
 
 На каждом Bitrix-проекте агент должен одинаково понимать:
@@ -14,10 +16,12 @@
 
 ## Что внутри
 
+Содержимое репозитория лежит **в корне** и после клонирования оказывается в `.cursor/` целевого Bitrix-проекта:
+
 ```
-.cursor/
+.cursor/               ← каталог после git clone в Bitrix-проекте
 ├── AGENTS.md          # Главная инструкция для агента: приоритеты, структура, чек-листы
-├── README.md          # Оглавление скиллов
+├── README.md          # Этот файл — описание базы знаний и оглавление скиллов
 └── skills/            # Тематические навыки (SKILL.md по каждой области Bitrix)
     ├── bitrix-psr-12/
     ├── bitrix-orm/
@@ -37,10 +41,10 @@
 Из корня Bitrix-проекта (рядом с `/local/`, `/bitrix/`):
 
 ```bash
-git clone <URL-репозитория> .cursor
+git clone https://github.com/xesamanna2000/cursor.git .cursor
 ```
 
-После клонирования Cursor автоматически подхватит `AGENTS.md` и скиллы из `.cursor/`.
+После клонирования Cursor автоматически подхватит `.cursor/AGENTS.md` и скиллы из `.cursor/skills/`.
 
 ### Обновление правил
 
@@ -54,7 +58,7 @@ git pull
 Удобно, когда нужно зафиксировать версию базы знаний в истории проекта:
 
 ```bash
-git submodule add <URL-репозитория> .cursor
+git submodule add https://github.com/xesamanna2000/cursor.git .cursor
 git commit -m "Подключить Bitrix AI Knowledge Base"
 ```
 
@@ -64,28 +68,41 @@ git commit -m "Подключить Bitrix AI Knowledge Base"
 git submodule update --remote .cursor
 ```
 
-## Публикация на GitHub
-
-1. Создать пустой репозиторий на GitHub.
-2. В корне этого репозитория:
-
-```bash
-git init
-git add .
-git commit -m "Initial commit: Bitrix AI knowledge base"
-git remote add origin git@github.com:<user>/<repo>.git
-git push -u origin main
-```
-
-3. В Bitrix-проектах использовать URL этого репозитория при клонировании или добавлении submodule.
-
 ## Как пользоваться в работе
 
 1. Подключить репозиторий в `.cursor/` целевого Bitrix-проекта (см. выше).
-2. Открыть проект в Cursor — агент будет следовать `AGENTS.md`.
+2. Открыть Bitrix-проект в Cursor — агент будет следовать `.cursor/AGENTS.md`.
 3. При задачах по конкретной теме агент обращается к соответствующему скиллу из `.cursor/skills/`.
 4. Изменения в правилах и скиллах вносятся **здесь**, в этом репозитории, а не в коде сайта.
 5. На каждом проекте периодически выполнять `git pull` в `.cursor/`, чтобы получить актуальные инструкции.
+
+## Оглавление скиллов
+
+| Область | Скилл | Краткое описание |
+| :--- | :--- | :--- |
+| **Кодстайл** | `bitrix-psr-12` | PSR-12, strict_types, именование, типизация, шаблоны |
+| **Модули** | `bitrix-modules` | Создание модуля, `install/index.php`, регистрация в админке |
+| **CLI** | `bitrix-console-commands` | CLI, `bitrix.php`, генераторы `make:*`, cron, своя команда |
+| **Контроллеры** | `bitrix-controllers` | AJAX/REST-контроллеры, actions, фильтры, autowire, render |
+| **Роутинг** | `bitrix-routing` | Маршруты, группы, префиксы, генерация URL, миграция с urlrewrite |
+| **ORM** | `bitrix-orm` | `DataManager`, `getMap`, `query()`, `fetchObject`, события ORM |
+| **События** | `bitrix-events` | Новые события (`Event`, `EventResult`) и старые `OnBefore*` |
+| **Валидация** | `bitrix-validation` | Валидация объектов/DTO, атрибуты, `ValidationService` |
+| **DI** | `bitrix-service-locator` | `ServiceLocator`, DI, регистрация сервисов |
+| **Кеширование** | `bitrix-caching` | `Cache`, `ManagedCache`, `TaggedCache`, сброс по таблице |
+| **Безопасность** | `bitrix-security` | CSRF, SQLi-риски ORM, XSS, права |
+| **Фон/Задачи** | `bitrix-background-jobs` | Агенты, `addBackgroundJob`, очереди `Messenger` |
+| **Результаты** | `bitrix-result-and-errors` | `Result`, `Error`, `ErrorCollection`, типизированные результаты |
+| **Компоненты** | `bitrix-components` | Компоненты: `class.php`, шаблоны, кеш, `Controllerable`, AJAX |
+| **Инфоблоки** | `bitrix-iblocks` | Инфоблоки: `IblockTable`, свойства, SEO, `CIBlock*`-API |
+| **HTTP-клиент** | `bitrix-http-client` | `HttpClient`: legacy/PSR-18, async, прокси, SSRF |
+| **Логирование** | `bitrix-logger` | PSR-3 логи: `FileLogger`, `LogFormatter`, секция `loggers` |
+| **Локализация** | `bitrix-localization` | `Loc::getMessage`, lang-файлы, `Culture`, `BX.message` |
+| **Дата/Время** | `bitrix-datetime` | `Bitrix\Main\Type\Date/DateTime`, таймзоны, `toUserTime` |
+| **HTTP-слой** | `bitrix-request-response` | `Application`, `Context`, `HttpRequest`, `HttpResponse`, `Json`/`Redirect` |
+| **Сессии** | `bitrix-sessions` | Сессии: `getSession`, `getKernelSession`, `getLocalSession`, режимы |
+| **Прямой SQL** | `bitrix-database` | `Connection`, `SqlHelper`, `SqlExpression`, транзакции, DDL |
+| **Спец. задание** | `bitrix-ai-challenge` | Требования и ограничения модуля «Избранное» (ТЗ) |
 
 ## Что сюда не входит
 
@@ -103,4 +120,4 @@ git push -u origin main
 - PHP **8.2+**;
 - современное ядро D7, Composer, консоль `bitrix.php`.
 
-Подробности — в [`.cursor/AGENTS.md`](.cursor/AGENTS.md).
+Подробности — в [AGENTS.md](AGENTS.md).
