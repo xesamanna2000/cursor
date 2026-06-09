@@ -1,0 +1,62 @@
+---
+description: Никогда не оставлять отладочный код — var_dump, print_r, die, exit, dd, dump
+globs: "**/*.php,**/*.js,**/*.ts"
+alwaysApply: false
+---
+
+# Отладочный код: не оставлять в файлах
+
+Отладочные конструкции нельзя коммитить и оставлять в коде. Если они появились в процессе работы — удалить до финального ответа.
+
+## Запрещено оставлять
+
+```php
+var_dump($value);
+print_r($data);
+die('debug');
+die(var_dump($x));
+exit('stop');
+dd($value);          // если подключён symfony/var-dumper
+dump($value);
+d($value);           // helper из некоторых пакетов
+
+echo '<pre>';
+print_r($array);
+echo '</pre>';
+
+define('STOP_STATISTICS', true);  // отключает агентов — только для локальной отладки
+define('BX_DEBUG', true);         // только для локальной отладки
+
+error_log(print_r($data, true));  // временные логи в error_log
+```
+
+## Как логировать правильно
+
+Вместо отладочного вывода — PSR-3 логгер (см. скилл `bitrix-logger`):
+
+```php
+$logger->debug('Значение переменной', ['value' => $value]);
+$logger->error('Ошибка при обработке', ['context' => $context]);
+```
+
+## Если нужно временно остановить выполнение
+
+Вместо `die()` / `exit()` — бросай исключение или возвращай `Result` с ошибкой:
+
+```php
+throw new \LogicException('Отладочная точка остановки');
+// или
+return (new \Bitrix\Main\Result())->addError(new \Bitrix\Main\Error('debug stop'));
+```
+
+## Исключения
+
+`die()` допустим в двух случаях:
+
+1. Стандартный guard в файлах компонентов и шаблонов — это не отладочный код:
+   ```php
+   if (!defined('B_PROLOG_INCLUDED') || B_PROLOG_INCLUDED !== true) { die(); }
+   ```
+2. После `fastcgi_finish_request()` для немедленного завершения worker'а (composite-режим).
+
+В остальных ситуациях — использовать `HttpResponse`, `terminate()` или исключение.

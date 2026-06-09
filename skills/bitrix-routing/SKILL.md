@@ -1,6 +1,6 @@
 ---
 name: bitrix-routing
-description: Покрывает новую систему маршрутов Bitrix — RoutingConfigurator, файлы /local/routes/*.php (web.php, api.php), группы и префиксы, middleware, именованные маршруты, параметры и where-ограничения, генерация URL через UrlManager и route name. Применяется при создании публичных URL, REST-эндпоинтов, миграции с urlrewrite.php и подключении маршрутов модуля через секцию routing в .settings.php. Ключевые термины — route, RoutingConfigurator, web.php, api.php, prefix, middleware, urlrewrite, UrlManager.
+description: Покрывает новую систему маршрутов Bitrix — RoutingConfigurator, файлы /local/routes/*.php (web.php, api.php), группы и префиксы, именованные маршруты, where-ограничения, генерация URL через Router::route(). Применяется при создании публичных URL, REST-эндпоинтов, миграции с urlrewrite.php и подключении маршрутов модуля через секцию routing в .settings.php. Ключевые термины — route, RoutingConfigurator, web.php, api.php, prefix, urlrewrite, Router.
 ---
 
 # Маршрутизация в Bitrix
@@ -59,7 +59,7 @@ return function (RoutingConfigurator $routes): void {
 
 Принимаются:
 
-- `[Controller::class, 'actionMethod']` — метод контроллера Bitrix (без суффикса `Action`? **С суффиксом**, как есть: `createAction`).
+- `[Controller::class, 'actionMethod']` — метод контроллера Bitrix **с суффиксом** `Action`, как есть: `createAction`.
 - Callable/closure:
 
     ```php
@@ -128,6 +128,15 @@ $routes->group(['prefix' => '/api', 'name' => 'api.'], function (RoutingConfigur
 ```
 
 Поддерживается объединение опций: `prefix`, `name` (префикс имени), `where` (регулярки для группы).
+
+## «Middleware» и защита маршрутов
+
+У Bitrix-роутера **нет** стека middleware как в Laravel. Защита и фильтрация — в контроллере:
+
+- `configureActions()` + `ActionFilter\Authentication`, `Csrf`, `HttpMethod`, `ContentType` (см. `bitrix-controllers`)
+- для публичных GET без CSRF — явно снимай `Csrf` в `configureActions`
+
+Общие проверки для группы маршрутов выноси в базовый контроллер или trait, не в `web.php`.
 
 ## Отдача view / компонента
 

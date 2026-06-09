@@ -1,0 +1,39 @@
+---
+description: Шаблоны компонентов — template.php только рендер; result_modifier — лёгкая постобработка $arResult
+globs: "**/templates/**/*.php,**/result_modifier.php,**/component_epilog.php"
+alwaysApply: false
+---
+
+# Шаблоны компонентов: только вьюха
+
+- **`template.php`** — только вывод готовых данных (`$arResult`, `$arParams`). Без запросов к БД и сервисов.
+- **`result_modifier.php`** — лёгкая постобработка уже полученных данных (URL, форматирование), **без новых запросов**.
+- **`component_epilog.php`** — метаданные страницы после шаблона (см. `bitrix-components`).
+
+## Запрещено в template.php
+
+- Вызовы ORM: `PostTable::getList(...)`, `UserTable::getById(...)`
+- Обращения к сервисам: `ServiceLocator::getInstance()->get(...)`
+- Бизнес-логика: сортировка, фильтрация, агрегация данных
+- Подключение модулей: `Loader::includeModule(...)`
+- Прямые SQL-запросы
+
+## Разрешено в template.php
+
+- Рендер `$arResult` / `$arParams`, условный вывод, `foreach`
+- Хелперы форматирования (дата, цена, `htmlspecialcharsbx`)
+- `$APPLICATION->IncludeComponent(...)`, `AddHeadScript`, `SetTitle`
+- **Динамические области composite:** `$this->createFrame()` (см. `bitrix-composite`) — разметка отображения, без новых запросов вне уже подготовленного `$arResult`
+
+## Запрещено в result_modifier.php
+
+- Новые запросы к БД, ORM, сервисам, `Loader::includeModule`
+
+## Где должна быть логика
+
+- `class.php` — получение и подготовка данных
+- `lib/` модуля — бизнес-логика
+
+## Почему
+
+Логика в шаблоне не кешируется, не тестируется и ломает компонентный кеш Bitrix.

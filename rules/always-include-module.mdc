@@ -1,0 +1,44 @@
+---
+description: Перед использованием классов модуля всегда вызывать Loader::includeModule()
+alwaysApply: true
+---
+
+# Подключение модулей: всегда через Loader
+
+Перед обращением к классам, функциям или константам любого Bitrix-модуля **всегда** вызывай `Loader::includeModule()`.
+
+## Правило
+
+```php
+\Bitrix\Main\Loader::includeModule('iblock');
+\Bitrix\Main\Loader::includeModule('vendor.module');
+```
+
+Вызов делается **один раз** в точке входа: в `class.php` компонента, в action-методе контроллера, в конструкторе сервиса, в `init.php` или admin-странице модуля (`admin/*.php`). Каталог `install/` не редактируем (см. `no-module-install.mdc`).
+
+## Где не нужно
+
+- Внутри самого модуля — его собственные классы уже доступны.
+- Для модулей `main` и `fileman` — они подключаются ядром автоматически.
+
+## Проверка результата
+
+Если подключение опционально (модуль может отсутствовать):
+
+```php
+if (\Bitrix\Main\Loader::includeModule('sender')) {
+    // работаем с модулем рассылок
+}
+```
+
+Если модуль обязателен — бросать исключение при неудаче:
+
+```php
+if (!\Bitrix\Main\Loader::includeModule('vendor.module')) {
+    throw new \Bitrix\Main\LoaderException('Module vendor.module is not installed');
+}
+```
+
+## Почему
+
+Без `includeModule()` классы модуля доступны только случайно — если другой запрос или хук уже подключил модуль. В production это приводит к непредсказуемым `Class not found` в зависимости от порядка загрузки.

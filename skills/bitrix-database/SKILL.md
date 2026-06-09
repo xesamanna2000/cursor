@@ -7,7 +7,7 @@ description: Покрывает прямую работу с базой Bitrix �
 
 ORM — первая линия выбора (`bitrix-orm`). Прямой SQL нужен для:
 
-- миграций/DDL в `install/index.php` / `updater.php`,
+- миграций/DDL (на проекте — sprint.migration; справочно также `install/index.php` / `updater.php`),
 - массовых операций (`UPSERT`, `REPLACE`, окна/CTE),
 - отчётов с `GROUP BY`/агрегатами, которые громоздко собирать через ORM,
 - работы с несколькими соединениями (аналитическая реплика, Redis).
@@ -245,7 +245,7 @@ catch (\Bitrix\Main\DB\TransactionException $e)
 }
 ```
 
-## DDL (в `install/index.php`, `updater.php`, командах миграций)
+## DDL (на проекте — sprint.migration; справочно `install/index.php`, `updater.php`)
 
 ```php
 use Bitrix\Main\ORM\Fields;

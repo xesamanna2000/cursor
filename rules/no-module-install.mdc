@@ -1,26 +1,65 @@
 ---
-description: В проекте не работаем с install в модулях Bitrix
-globs: local/modules/**
+description: Не редактировать install/ внутри local/modules/* — только каркас установщика модуля (index.php, version.php, DoInstall)
 alwaysApply: true
 ---
 
-# Модули Bitrix: без install
+# Модули Bitrix: каталог install/ не трогаем
 
-В этом проекте **не создаём и не изменяем** каталог `install/` в модулях (`local/modules/<vendor>.<module>/install/`).
+Запрет касается **только** каталога установщика пользовательского модуля:
 
-## Запрещено
+```
+/local/modules/<vendor>.<module>/install/**
+```
 
-- Создавать или править `install/index.php`, `install/version.php`, шаги установки/удаления
-- Добавлять миграции, события, агенты и опции через `install/`
-- Предлагать `DoInstall` / `DoUninstall` и сценарии переустановки модуля
+Это штатная папка Bitrix-модуля с `CModule`, `DoInstall` / `DoUninstall`, `version.php`, копированием файлов в `/bitrix/` при установке. Её **не создаём и не изменяем** вручную и через агента.
 
-## Куда выносить изменения
+## Что именно запрещено
+
+Пути внутри `install/` модуля, например:
+
+- `install/index.php` — класс `<vendor>_<module> extends CModule`
+- `install/version.php` — `$arModuleVersion`
+- `install/db/`, `install/components/`, `install/admin/` и любые другие подкаталоги **внутри** `install/`
+- `lang/<lang>/install/index.php` — переводы установщика
+
+Действия:
+
+- править `DoInstall`, `DoUninstall`, `InstallDB`, `UnInstallDB`
+- регистрировать события, агенты, права, почтовые шаблоны **через install**
+- предлагать переустановку модуля как способ применить изменения
+
+## Что НЕ подпадает под запрет
+
+Работа в остальных каталогах модуля — **разрешена**:
+
+| Путь | Примеры |
+|---|---|
+| `lib/` | сервисы, ORM, контроллеры, обработчики |
+| `.settings.php` | DI, роутинг, консоль |
+| `admin/` | страницы админки (`vendor_module_list.php`) |
+| `routes/` | `web.php` модуля |
+| `lang/` (кроме `lang/*/install/`) | переводы admin, options |
+| `options.php` | настройки модуля в админке |
+| `include.php` | автозагрузка |
+
+Также **не путать** с другими путями:
+
+- `/bitrix/modules/*/install/` — ядро, запрещено правилом `no-bitrix-core`
+- `/local/php_interface/` — не модульный `install/`
+- sprint.migration — миграции в `/local/migrations/`, не в `install/`
+
+## Куда выносить изменения вместо install/
 
 - Бизнес-логика — `lib/`
+- События — `lib/Internals/Integration/` + регистрация в `init.php` или bootstrap проекта
+- Схема БД, HL, инфоблоки — sprint.migration (см. `sprint-migration.mdc`)
 - DI, роутинг, консоль — `.settings.php`
-- Автозагрузка — `include.php` или composer
-- Регистрация событий и прочая интegraция — вручную или через существующие механизмы проекта, **не через install**
+- Admin-страницы — `admin/` модуля (файлы лежат в модуле, не в `install/admin/`)
 
-## Если задача касается установки
+## Создание нового модуля
 
-Не предлагать правки в `install/`. Уточнить у пользователя, как применить изменение на уже установленном модуле (ручная настройка, миграция, скрипт вне `install/`).
+`make:module` может **сгенерировать** каркас `install/` один раз — агент **не дорабатывает** его после генерации. Вся дальнейшая разработка — в `lib/`, `.settings.php`, `admin/` и т.д.
+
+## Если задача «как при установке»
+
+Не править `install/`. Уточнить у пользователя, как применить изменение на уже установленном модуле: миграция, ручная настройка, скрипт, `init.php`.

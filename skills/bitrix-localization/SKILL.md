@@ -183,7 +183,7 @@ php bitrix/bitrix.php translate:index
 ## Мультиязычные модули
 
 - Храни фразы `lang/ru/`, `lang/en/`, `lang/de/` — в корне PHP-файла, который их использует.
-- В `install/index.php` модуля подключай переводы: `Loc::loadMessages(__FILE__)`.
+- В admin/options/lang-файлах модуля подключай переводы: `Loc::loadMessages(__FILE__)`. (`lang/*/install/` — часть установщика, не редактируем; см. `no-module-install.mdc`.)
 - `Loc::getDefaultLang(LANGUAGE_ID)` используй, чтобы «упасть» на базовый язык модуля (`ru`), если нет `kz`/`ua`.
 - Публикуй названия языков в системе через форму *Языки интерфейса* — её нельзя задать из `.settings.php`.
 

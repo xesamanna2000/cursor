@@ -17,7 +17,12 @@ description: Покрывает безопасность в Bitrix — CSRF-то
     ```
 
 - В запросах `fetch`: заголовок `X-Bitrix-Csrf-Token: <bitrix_sessid()>`.
-- Ручная проверка (если пишешь обработчик напрямую): `if (!check_bitrix_sessid()) { die('Invalid sessid'); }`.
+- Ручная проверка (если пишешь обработчик напрямую):
+  ```php
+  if (!check_bitrix_sessid()) {
+      \Bitrix\Main\Application::getInstance()->terminate(403);
+  }
+  ```
 
 ### Когда сессии readonly
 

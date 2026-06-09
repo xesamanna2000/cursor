@@ -1,0 +1,37 @@
+---
+description: Никогда не использовать $_GET, $_POST, $_SESSION, $_COOKIE напрямую — только Bitrix API
+alwaysApply: true
+---
+
+# Суперглобальные переменные: только через Bitrix API
+
+Прямое обращение к `$_GET`, `$_POST`, `$_SESSION`, `$_COOKIE`, `$_REQUEST`, `$_FILES` запрещено. Используй API Bitrix.
+
+## Замены
+
+| Вместо | Использовать |
+|---|---|
+| `$_GET['foo']` / `$_POST['foo']` | `$request->get('foo')` / `$request->getPost('foo')` где `$request = \Bitrix\Main\Application::getInstance()->getContext()->getRequest()` |
+| `$_SESSION['foo']` | `\Bitrix\Main\Application::getInstance()->getSession()->get('foo')` |
+| `$_COOKIE['foo']` | `$request->getCookie('foo')` |
+| `$_FILES` | `$request->getFile('field')` |
+| `$_SERVER['...']` | `$request->getServer()->get('...')` |
+
+## В контроллерах
+
+Параметры запроса доступны через аргументы action-метода (autowire) или через `$this->getRequest()`.
+
+```php
+public function createAction(string $title, int $categoryId): array
+{
+    // Bitrix сам достанет title и categoryId из запроса
+}
+```
+
+## Исключение
+
+`$_SERVER['DOCUMENT_ROOT']` допустим для построения файловых путей и `require_once` — это серверная переменная окружения, не пользовательский ввод. Остальные ключи `$_SERVER` (например, `HTTP_HOST`, `REQUEST_METHOD`) — через `$request->getServer()->get(...)`.
+
+## Почему
+
+Прямые суперглобальные переменные обходят фильтрацию и нормализацию Bitrix, усложняют тестирование и нарушают архитектурные границы фреймворка.

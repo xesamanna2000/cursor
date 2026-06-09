@@ -27,8 +27,9 @@
 ├── components/<vendor>/<name>/     # Пользовательские компоненты
 ├── templates/<template_id>/        # Шаблоны сайтов
 ├── routes/                         # Конфигурация роутинга (web.php, api.php, ...)
+├── migrations/                     # sprint.migration (если модуль установлен)
 ├── activities/                     # Действия бизнес-процессов
-├── php_interface/                  # init.php, user_lang
+├── php_interface/                  # init.php, user_lang, регистрация событий
 ├── js/                             # Кастомные JS-скрипты
 ├── blocks/                         # Блоки Сайтов24
 ├── .settings.php                   # Доступно с main 24.100.0
@@ -42,10 +43,11 @@
 
 ```
 <vendor>.<module>/
-├── install/
-│   ├── index.php            # class <vendor>_<module> extends CModule
-│   ├── version.php          # $arModuleVersion
-│   └── components/...       # Компоненты, которые устанавливает модуль
+├── install/                 # ⚠ не редактировать (см. rules/no-module-install.mdc)
+│   ├── index.php            # CModule — только каркас от make:module
+│   ├── version.php
+│   └── components/...       # копируется в /bitrix/ при DoInstall
+├── admin/                   # страницы админки модуля (редактируем)
 ├── lang/<lang>/...          # Локализация
 ├── lib/                     # Автозагрузка по PSR-4, имена папок в PascalCase
 │   ├── Application/         # Сервисы прикладного слоя (UseCase, фасады)
@@ -72,6 +74,7 @@
 - Классы в `/lib/` автозагружаются по PSR-4 — **не регистрируй их руками** через `Loader::registerAutoLoadClasses`, если структура PSR-4 соблюдена.
 - Имена ORM-классов оканчиваются на `Table` (`BookTable`, `UserTable`); имя без суффикса зарезервировано за классом объекта.
 - Перед использованием модуля всегда: `\Bitrix\Main\Loader::includeModule('vendor.module')`.
+- Каталог `install/` модуля (`/local/modules/<vendor>.<module>/install/**`) — **не редактировать**: события, миграции, admin, DI — в `lib/`, `.settings.php`, `admin/`, sprint.migration (см. `rules/no-module-install.mdc`).
 
 ### Файл `<module>/.settings.php` (новый формат, main 25.900+)
 
@@ -179,7 +182,30 @@ final class NotificationService
 9. Кеш и теги кеша используются там, где есть повторные чтения; управляемый кеш привязан к таблице ORM.
 10. Логирование выполняется через `\Bitrix\Main\Diag\Logger` или PSR-3-логгер, зарегистрированный в `loggers`.
 11. Новые маршруты — в `/local/routes/*.php`; `urlrewrite.php` не используется для нового кода.
-12. Обработчики событий зарегистрированы в `install/index.php` модуля и удаляются при деинсталляции.
+12. Обработчики событий — в `lib/Internals/Integration/`; регистрация через `init.php` или механизм проекта, **не через `install/`** (см. `no-module-install.mdc`).
+13. Изменения схемы (таблицы, HL, инфоблоки, UF, почтовые шаблоны) — через sprint.migration, если модуль установлен (см. `bitrix-sprint-migration`).
+14. Шаблоны компонентов — только рендер; логика в `class.php` и сервисах (см. `template-view-only.mdc`).
+15. Отладочный код (`var_dump`, `die`, `dd`) не остаётся в коммите (см. `no-debug-code.mdc`).
+
+---
+
+## Правила Cursor (`rules/`)
+
+Дополняют этот файл. После клонирования в `.cursor/rules/`.
+
+| Правило | Когда действует |
+| --- | --- |
+| `general-behavior.mdc` | Всегда — русский язык, краткость |
+| `plan-with-skills.mdc` | Всегда — план по скиллам, субагенты, ревью |
+| `no-module-install.mdc` | Всегда — не править `/local/modules/*/install/**` |
+| `no-bitrix-core.mdc` | Всегда — только `/local/`, не `/bitrix/` |
+| `no-superglobals.mdc` | Всегда — не `$_GET`/`$_POST`/`$_SESSION` |
+| `always-include-module.mdc` | Всегда — `Loader::includeModule()` |
+| `template-view-only.mdc` | При работе с `**/templates/**` |
+| `no-debug-code.mdc` | При работе с `*.php`, `*.js` |
+| `sprint-migration.mdc` | При работе с `local/migrations/**` |
+
+При задачах на **схему данных** (HL, инфоблок, UF) — сразу читай `bitrix-sprint-migration`, даже если файл миграции ещё не открыт.
 
 ---
 
@@ -190,28 +216,37 @@ final class NotificationService
 | Область | Скилл |
 | --- | --- |
 | PSR-12, strict_types, именование, типизация, шаблоны | `bitrix-psr-12` |
-| Создание модуля, `install/index.php`, регистрация в админке | `bitrix-modules` |
-| CLI, `bitrix.php`, генераторы `make:*`, cron, своя команда | `bitrix-console-commands` |
-| AJAX/REST-контроллеры, actions, фильтры, autowire, render | `bitrix-controllers` |
-| Маршруты, группы, префиксы, генерация URL, миграция с urlrewrite | `bitrix-routing` |
-| `DataManager`, `getMap`, `query()`, `fetchObject`, события ORM | `bitrix-orm` |
-| Новые события (`Event`, `EventResult`) и старые `OnBefore*` | `bitrix-events` |
-| Валидация объектов/DTO, атрибуты, `ValidationService` | `bitrix-validation` |
-| `ServiceLocator`, DI, регистрация сервисов | `bitrix-service-locator` |
-| `Cache`, `ManagedCache`, `TaggedCache`, сброс по таблице | `bitrix-caching` |
-| CSRF, SQLi-риски ORM (`select`/`filter`/`SqlExpression`), XSS, права | `bitrix-security` |
-| Агенты, `addBackgroundJob`, очереди `Messenger` | `bitrix-background-jobs` |
-| `Result`, `Error`, `ErrorCollection`, типизированные результаты | `bitrix-result-and-errors` |
-| Компоненты: `class.php`, шаблоны, кеш, `Controllerable`, AJAX | `bitrix-components` |
-| Инфоблоки: `IblockTable`, свойства, SEO, `CIBlock*`-API | `bitrix-iblocks` |
-| `HttpClient`: legacy/PSR-18, async, прокси, SSRF, настройки | `bitrix-http-client` |
-| PSR-3 логи: `FileLogger`, `LogFormatter`, секция `loggers` | `bitrix-logger` |
-| `Loc::getMessage`, lang-файлы, `Culture`, `BX.message` | `bitrix-localization` |
-| `Bitrix\Main\Type\Date/DateTime`, таймзоны, `toUserTime` | `bitrix-datetime` |
-| `Application`, `Context`, `HttpRequest`, `HttpResponse`, `Json`/`Redirect` | `bitrix-request-response` |
-| Сессии: `getSession`, `getKernelSession`, `getLocalSession`, режимы | `bitrix-sessions` |
-| Прямой SQL: `Connection`, `SqlHelper`, `SqlExpression`, транзакции, DDL | `bitrix-database` |
-| Тестовое задание: модуль «Избранное (Wishlist)» | `bitrix-ai-challenge` |
+| Модуль без правок `install/`: `lib/`, `.settings.php`, `admin/`, `make:module` | `bitrix-modules` |
+| sprint.migration: HL, инфоблоки, UF, почта, DDL | `bitrix-sprint-migration` |
+| CLI, `bitrix.php`, генераторы `make:*`, cron | `bitrix-console-commands` |
+| AJAX/REST-контроллеры, actions, фильтры, autowire | `bitrix-controllers` |
+| Маршруты, группы, `Router::route()`, urlrewrite | `bitrix-routing` |
+| `DataManager`, `getMap`, `query()`, `fetchObject` | `bitrix-orm` |
+| `Event`, `EventResult`, `OnBefore*` | `bitrix-events` |
+| ValidationService, атрибуты, DTO | `bitrix-validation` |
+| `ServiceLocator`, DI | `bitrix-service-locator` |
+| `Cache`, `TaggedCache`, `ManagedCache` | `bitrix-caching` |
+| CSRF, ORM filter, XSS, права | `bitrix-security` |
+| `CAgent`, `addBackgroundJob`, `Messenger` | `bitrix-background-jobs` |
+| `Result`, `Error`, `ErrorCollection` | `bitrix-result-and-errors` |
+| Компоненты: `class.php`, кеш, `Controllerable`, SEF | `bitrix-components` |
+| `IblockTable`, свойства, `CIBlock*` | `bitrix-iblocks` |
+| `HighloadBlockTable`, `compileEntity`, права HL | `bitrix-highloadblocks` |
+| `UserTable`, `CUser`, `$USER`, группы, UF_* | `bitrix-user` |
+| `Connection`, `SqlExpression`, транзакции | `bitrix-database` |
+| `Context`, `HttpRequest`, `Json`, `Redirect` | `bitrix-request-response` |
+| `HttpClient`, async, SSRF | `bitrix-http-client` |
+| `getSession`, kernel/local session | `bitrix-sessions` |
+| `Date`, `DateTime`, таймзоны | `bitrix-datetime` |
+| `Loc`, lang-файлы, `BX.message` | `bitrix-localization` |
+| PSR-3, `FileLogger`, `loggers` | `bitrix-logger` |
+| `Asset`, `Extension::load`, `addJs`/`addCss` | `bitrix-assets` |
+| `BX`, `BX.ajax.runAction`, `BX.namespace` | `bitrix-js` |
+| `CAdminList`, `CAdminTabControl`, `admin/` | `bitrix-admin` |
+| `createFrame`, `FrameStatic`, composite | `bitrix-composite` |
+| `Mail\Event::send()`, шаблоны писем | `bitrix-mail` |
+| `CFile`, `FileField`, `IO` | `bitrix-file` |
+| `SetTitle`, мета, canonical, sitemap | `bitrix-seo` |
 
 ---
 
@@ -231,7 +266,10 @@ final class NotificationService
 - Регистрация классов через `Loader::registerAutoLoadClasses`, если подходит PSR-4.
 - Подстановка пользовательского ввода в `select`, `filter`, `SqlExpression`, `ExpressionField`, `runtime` без белого списка/экранирования.
 - Использование `urlrewrite.php` для новых маршрутов.
-- Толстый контроллер / толстый компонент с обращениями к БД вместо сервиса.
+- Изменение схемы БД/HL/инфоблоков вручную или в PHP-коде без sprint.migration (если модуль установлен).
+- Правки в `/local/modules/<vendor>.<module>/install/**` — только каркас от `make:module`, без доработки.
+- Бизнес-логика и запросы к БД в `template.php` / `result_modifier.php` с новыми обращениями к данным.
+- Толстый контроллер / толстый компонент с **прямыми обращениями к БД** — бизнес-логика и запросы должны быть в сервисах; вызов сервисов из контроллера — норма.
 - Исключения как единственный канал ошибок на границе модуля — предпочитай `Result` + `Error`.
 - Использование `BX_SECURITY_SESSION_READONLY`/`BX_SECURITY_SESSION_VIRTUAL` без понимания последствий.
 - `debug => true` в `exception_handling` на боевом сервере.

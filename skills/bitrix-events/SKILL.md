@@ -5,6 +5,8 @@ description: Покрывает событийную систему Bitrix — �
 
 # События Bitrix
 
+> **Правило `no-module-install`:** регистрацию обработчиков в `install/index.php` / `DoInstall` не предлагаем. На проекте — `init.php`, bootstrap модуля или механизм проекта. Разделы про `install/` ниже — справочно (как устроен Bitrix).
+
 Есть **две модели событий**: новая (ООП, `Event` + `EventResult`) и старая (строковый код + обработчик, возвращающий bool/массив). Для нового кода — новая модель. Старая используется для совместимости с ядром (`OnBeforeUserAdd`, `OnPageStart`, ...).
 
 ## Новая модель — публикация своего события
@@ -96,9 +98,12 @@ final class NotifyAuthorHandler
 }
 ```
 
-### 4. Зарегистрировать обработчик в `install/index.php`
+### 4. Зарегистрировать обработчик (на проекте — не в `install/`)
+
+В `/local/php_interface/init.php` или bootstrap проекта:
 
 ```php
+\Bitrix\Main\Loader::includeModule('vendor.notify');
 \Bitrix\Main\EventManager::getInstance()->registerEventHandler(
     fromModule: 'vendor.blog',
     eventType: \Vendor\Blog\Public\Event\Post\PostCreatedEvent::class,
@@ -108,7 +113,7 @@ final class NotifyAuthorHandler
 );
 ```
 
-В `DoUninstall()` — **обязательно** `unRegisterEventHandler` с теми же параметрами.
+> Справочно: в стандартном Bitrix та же регистрация делается в `install/index.php` при `DoInstall`, снятие — в `DoUninstall`. На проекте `install/` не редактируем.
 
 ## Старая модель (совместимость)
 
@@ -171,7 +176,7 @@ EventManager::getInstance()->addEventHandler(
 
 - [ ] Файлы публичных событий — в `/lib/Public/Event/<Aggregate>/`.
 - [ ] Обработчики чужих событий — в `/lib/Internals/Integration/<OtherModule>/EventHandler/`.
-- [ ] Регистрация и снятие обработчиков парой в `DoInstall`/`DoUninstall`.
+- [ ] Регистрация обработчиков — в `init.php` / bootstrap проекта, **не в `install/`** (см. `no-module-install.mdc`).
 - [ ] Для собственных событий используется `Bitrix\Main\Event` + `EventResult`, а не возврат массивов.
 - [ ] Обработчик идемпотентен и не падает в фатал — всё заворачиваем в `try/catch` с логированием.
 - [ ] Тяжёлая логика уносится в очередь (`Messenger`), обработчик лишь ставит задачу.

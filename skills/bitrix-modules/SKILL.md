@@ -1,9 +1,11 @@
 ---
 name: bitrix-modules
-description: Покрывает создание и сопровождение собственного модуля Bitrix в /local/modules/<vendor>.<module>/ — класс CModule, install/index.php, DoInstall и DoUninstall, install/version.php с $arModuleVersion, регистрация событий и агентов на установке, опции модуля (options.php), генерация через make:module. Применяется при создании нового модуля, доработке установки/удаления, регистрации обработчиков событий и публикации опций модуля в админке. Ключевые термины — CModule, DoInstall, DoUninstall, module manifest, install/index.php, make:module, vendor.module.
+description: Покрывает собственный модуль Bitrix в /local/modules/<vendor>.<module>/ — структура lib/, .settings.php, admin/, options.php, make:module. На проекте install/ не редактируем (см. no-module-install). Применяется при создании модуля, DI, роутинга, admin-страниц и опций. Ключевые термины — vendor.module, lib/, .settings.php, make:module, PSR-4.
 ---
 
 # Модули Bitrix
+
+> **Правило `no-module-install`:** не редактировать `/local/modules/<vendor>.<module>/install/**` (установщик `CModule`, `DoInstall`). Разработка — в `lib/`, `.settings.php`, `admin/`, sprint.migration. Разделы ниже про `install/` — справочно (как устроен Bitrix); на проекте в `install/` не правим.
 
 ## Идентификатор и неймспейс
 
@@ -33,7 +35,7 @@ php bitrix/bitrix.php make:module vendor.module
 └── include.php                  # опционально, для registerNamespace/registerAutoLoadClasses
 ```
 
-## `install/version.php`
+## `install/version.php` (справочно)
 
 ```php
 <?php
@@ -43,9 +45,9 @@ $arModuleVersion = [
 ];
 ```
 
-## `install/index.php`
+## `install/index.php` (справочно)
 
-Наследуемся от `CModule`, реализуем `DoInstall`/`DoUninstall`. Базовый шаблон:
+Как устроен установщик Bitrix. **На проекте не редактируем** — только каркас от `make:module`. Базовый шаблон:
 
 ```php
 <?php
@@ -231,9 +233,10 @@ return [
 
 ## Чеклист качественного модуля
 
-- [ ] `install/index.php` идемпотентен: повторная установка не ломает систему.
-- [ ] В `DoUninstall` снимаются **все** обработчики событий, добавленные на `DoInstall`.
-- [ ] Таблицы создаются через ORM, колонки — через `addField`/миграции.
+- [ ] `install/` не редактировался вручную (см. `no-module-install.mdc`).
+- [ ] События — в `lib/Internals/Integration/`, регистрация в `init.php` или bootstrap проекта.
+- [ ] Схема БД — sprint.migration (`bitrix-sprint-migration`), не `install/`.
+- [ ] Таблицы — ORM `*Table`, DDL через миграции.
 - [ ] Неймспейс соответствует идентификатору и PSR-4-структуре папок `/lib/`.
 - [ ] Добавлен `.settings.php` с нужными секциями.
 - [ ] Публикуемые сущности (события, сервисы) выделены в `Public/`, внутренние — в `Internals/`.

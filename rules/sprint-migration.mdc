@@ -1,0 +1,22 @@
+---
+description: Изменения схемы БД и справочников — через sprint.migration (подробности в skills/bitrix-sprint-migration)
+globs: "local/migrations/**,**/migrations/Version*.php"
+alwaysApply: false
+---
+
+# Миграции: sprint.migration
+
+Если на проекте установлен `sprint.migration` — изменения структуры данных (таблицы, HL, инфоблоки, UF, почтовые шаблоны) **только через миграции** в `/local/migrations/`, не вручную и не в `install/` модуля.
+
+Перед задачей на схему прочитай **`skills/bitrix-sprint-migration/SKILL.md`**.
+
+## Кратко
+
+- Создание: `php /bitrix/modules/sprint.migration/tools/migrate.php add "Описание"`
+- Применение: `migrate.php up` / `down` / `ls`
+- Helpers: `Hlblock()`, `Iblock()`, `UserTypeEntity()`, `Event()`, `Sql()`
+- Всегда `down()`, методы `save*`, без хардкода ID
+
+## Если sprint.migration не установлен
+
+Не предлагать правки в `install/`. Уточнить у пользователя, как принято на проекте.
